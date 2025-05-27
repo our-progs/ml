@@ -1,29 +1,33 @@
-import numpy as np 
+import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.neighbors import KNeighborsClassifier
 
-np.random.seed(42) 
-X=np.linspace(-3,3,100) 
-Y=np.sin(X)+np.random.normal(0,0.1,100) 
+np.random.seed(42)
+x = np.random.rand(100, 1)
 
-X_matrix=np.c_[np.ones(X.shape[0]),X]
+y = np.where(x[:50] <= 0.5, 'Class1', 'Class2')
 
-def get_weights(query_point,X,tau):
-    return np.exp(-((X-query_point)**2)/ (2*tau**2))
+print("\nTraining data set up to first 50 numbers")
+for i in range(50):
+    print(f"x{i+1} = {x[i][0]:.3f} → classified as {y[i]}")
 
-def locally_weighted_regression(query_x,X,Y,tau):
-    W=np.diag(get_weights(query_x,X,tau))
-    theta=np.linalg.pinv(X_matrix.T@W@X_matrix)@X_matrix.T@W@Y
-    return np.array([1,query_x])@theta
+k_values = [1, 2, 3, 4, 5, 20, 30]
 
-tau_values=[0.1,0.3,1.0] 
-plt.figure(figsize=(10,6))
+for k in k_values:
+    knn = KNeighborsClassifier(n_neighbors=k)
+    knn.fit(x[:50], y)
+    y_pred = knn.predict(x[50:])
 
-for tau in tau_values:
-    Y_pred = np.array([locally_weighted_regression(x,X,Y,tau)for x in X ])
-    plt.plot(X,Y_pred,label=f'Tau={tau}')
-    plt.scatter(X,Y,color='blue',label='Original Data',alpha=0.5)
-plt.xlabel("X")
-plt.ylabel("Y") 
-plt.title("Locally Weighted Regression with different Tou value")
+    print(f"\nResults for k = {k}:")
+    for i, label in enumerate(y_pred, start=51):
+        print(f"x{i} = {x[i-1][0]:.3f} -> Classified as {label}")
+
+plt.figure(figsize=(8, 5))
+colors = ['blue' if label == 'Class1' else 'red' for label in y]
+plt.scatter(x[:50], np.zeros(50), c=colors, label="Labeled Data")
+plt.scatter(x[50:], np.zeros(50), c='black', marker='x', label="Unlabeled Data")
+plt.xlabel("x values")
+plt.ylabel("Classification")
+plt.title("KNN Classification of Random Data Points")
 plt.legend()
-plt.show()   
+plt.show()
